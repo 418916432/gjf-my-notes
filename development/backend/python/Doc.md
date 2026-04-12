@@ -31,3 +31,7 @@ python的测试框架
 # 详细模式（最常用）
 pytest tests/ -v
 ```
+### .env
+```
+python环境变量配置文件
+```
