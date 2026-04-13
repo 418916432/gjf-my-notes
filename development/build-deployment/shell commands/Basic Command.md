@@ -18,5 +18,9 @@ date: 显示或者设置系统时间的命令
 
 +: 在date中的命令，后面跟着的是自定义格式
 
+apt-get: Ubuntu/Debian包管理工具
+
+pip install: python的包管理工具
+
 
 ```
