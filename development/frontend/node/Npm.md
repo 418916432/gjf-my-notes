@@ -76,4 +76,5 @@ next 代码里启动了 HTTP 服务器
     ↓
 服务器开始运行在 localhost:3000
 
+npm run build: 将源代码（TypeScript/JSX）转换成浏览器可以运行的静态文件（HTML/JS/CSS)
 ```
