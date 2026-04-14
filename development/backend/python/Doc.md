@@ -35,3 +35,12 @@ pytest tests/ -v
 ```
 python环境变量配置文件
 ```
+### mypy
+```
+检查代码中的类型是否正确
+
+比如：
+def add(a: int, b: int) -> int: # 加了类型注解 return a + b
+
+add("hello", 123) # ← mypy 会在这里报错，因为类型不匹配
+```

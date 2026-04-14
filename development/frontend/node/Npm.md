@@ -15,6 +15,10 @@ npm run dev             # 运行 dev 脚本
 npm run build           # 运行 build 脚本
 npm start               # 运行 start 脚本（简写）
 npm test                # 运行 test 脚本（简写）
+npm ci                  # 干净严格稳定的安装所有前端依赖，因为npm install允许小版本升级，可能会自动更新package-lock.json，可能装出和你本地不一样的版本
+
+npm run lint: 检查代码格式、语法、规范错误
+npm run type-check: 检查 TypeScript 类型错误
 ```
 ### npm install
 ```
@@ -77,4 +81,8 @@ next 代码里启动了 HTTP 服务器
 服务器开始运行在 localhost:3000
 
 npm run build: 将源代码（TypeScript/JSX）转换成浏览器可以运行的静态文件（HTML/JS/CSS)
+```
+### package-lock.json
+```
+前端的依赖包都在这个文件里面。
 ```

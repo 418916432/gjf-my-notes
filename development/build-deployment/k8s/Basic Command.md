@@ -13,6 +13,20 @@ kubectl set image: 更新容器镜像
 kubectl -n viralcopy set image deployment/backend \
   backend=us-central1-docker.pkg.dev/amiable-port-452501-v7/viralcopy/backend:$IMAGE_TAG
 backend=...: 容器名=新镜像地址  
+
+kubectl -l app=backend: 通过标签找
+kubectl -n viralcopy get pod -l app=backend -o jsonpath='{.items[0].metadata.name}
+
+kubectl -o output
+jsonpath = 用 JSON 路径提取字段，取第0个pod的名字
+
+kubectl exec: 进入容器内部的命令
+kubectl -n viralcopy exec "$POD" -c backend -- alembic upgrade head
+-c: 一个容器可能有多个容器，指定进入backend这个容器
+
+kubectl rollout status: 查看部署状态
+kubectl -n viralcopy rollout status deployment/backend --timeout=5m
+
 ```
 ## yaml common
 ### apiVersion

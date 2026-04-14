@@ -67,6 +67,24 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 docker build的时候传入变量NEXT_PUBLIC_API_URL，这个变量再会写入名字为NEXT_PUBLIC_API_URL的环境变量
 
+-t: 给镜像打tag，一个镜像可以有多个tag
+
+.: DockerFile放在当前目录下
+
+
+```
+### docker push
+```
+- name: Build and push
+        run: |
+          docker build \
+            -t ${{ env.IMAGE }}:${{ steps.vars.outputs.short_sha }} \
+            -t ${{ env.IMAGE }}:latest \
+            backend/
+          docker push ${{ env.IMAGE }}:${{ steps.vars.outputs.short_sha }}
+          docker push ${{ env.IMAGE }}:latest
+          
+第一次推送推送镜像和tag，第二次推送只推送tag
 ```
 ### addgroup --system
 ```

@@ -3,6 +3,7 @@
 数据验证: 用 Python 类型注解来定义数据规则，自动进行数据验证、序列化和反序列化
 ```
 ## 基础用法
+### pydantic
 ```
 from pydantic import BaseModel
 
