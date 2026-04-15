@@ -93,3 +93,68 @@ sed
 s/PROJECT_ID/${PROJECT_ID}/g
 把文件的PROJECT_ID替换成这个变量的值PROJECT_ID
 ```
+### openssl
+```
+openssl: 是一个开源的命令行工具和加密库，用于处理 SSL/TLS 证书、加密、解密、生成随机数等安全相关的操作
+
+openssl rand -base64 32
+生成以base64遍吗的长度为32个字节的随机字符串
+
+```
+### tr
+```
+tr 是替换或者删除命令
+
+tr -d '/=+'
+-d 表示删除，会删除/ = +这三种符号
+
+```
+### head
+
+```
+head: Linux/Unix命令，用于显示文件或数据流的开头部分
+
+head -c 32
+-c: bytes，表示取前N个字节
+
+```
+### find
+```
+find k8s/ -name "*.yaml"
+在k8s目录下查找所有.yaml文件
+```
+### while
+```
+while read -r f; do
+  sed -i "s|PROJECT_ID|${PROJECT_ID}|g;s|REGION|${REGION}|g;s|IMAGE_TAG|${IMAGE_TAG}|g" "$f" \
+    2>/dev/null || \
+  sed -i '' "s|PROJECT_ID|${PROJECT_ID}|g;s|REGION|${REGION}|g;s|IMAGE_TAG|${IMAGE_TAG}|g" "$f"
+done
+
+逐行读取，每行存到变量 `f`，变量f存储的是文件路径/名字
+```
+
+### for
+```
+for cmd in gcloud kubectl docker; do
+    command -v "$cmd" &>/dev/null || log_error "'$cmd' not found. Please install it."
+  done
+  
+done for循环完成
+```
+### $
+```
+./deploy.sh arg1 arg2 arg3
+```
+### case
+```
+case语句，根据变量不同的值，执行不同的命令
+
+case "$SERVICE" in
+  backend)  deploy_backend ;;   # 如果 SERVICE=backend，执行 deploy_backend
+  frontend) deploy_frontend ;;  # 如果 SERVICE=frontend，执行 deploy_frontend
+  all)      deploy_backend; deploy_frontend ;;  # 如果 SERVICE=all，执行两个
+  *) echo "Unknown service: $SERVICE"; exit 1 ;;  # 其他情况，报错
+esac
+
+```

@@ -51,13 +51,53 @@ shift 2: 扔掉前 2 个参数
 当参数是skip-infra，设置true，丢掉当前变量
 
 ```
-### for
+### main
 ```
-for cmd in gcloud kubectl docker; do
-    command -v "$cmd" &>/dev/null || log_error "'$cmd' not found. Please install it."
-  done
-  
-done for循环完成
+main shell 脚本的入口
+
+main() {
+  check_prerequisites
+
+  if [[ "$SKIP_INFRA" == "false" ]]; then
+    setup_gcp_project
+    setup_artifact_registry
+    setup_cloud_sql
+    setup_gcs
+    setup_iam
+    setup_gke
+    setup_static_ip
+  fi
+
+  if [[ "$SKIP_BUILD" == "false" ]]; then
+    build_and_push
+  fi
+
+  apply_k8s
+  wait_for_rollout
+  run_migrations
+  print_summary
+}
+
+```
+### $
+```
+main "$@"
+调用main函数，并把参数原封不动的传给它
+
+./deploy.sh arg1 arg2 arg3
+$# = 3
+$@ = "arg1" "arg2" "arg3", 所有参数，分开
+$* = "arg1 arg2 arg3", 所有参数，合并成一个
+
+"$@": 
+用 "$@"（正确）→ 保持原样："hello world" "foo bar"
+
+$@:
+用 $@（错误）→ 被拆成："hello" "world" "foo" "bar"
+```
+### 函数与命令
+```
+命令从上到下自动执行，函数需要调用
 ```
 ## Sample
 ```

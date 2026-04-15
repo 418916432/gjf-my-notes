@@ -42,3 +42,142 @@ setup_gcp_project() {
 
 GCP 所有服务默认都是关闭的，你必须手动开启才能用，比如不enable就不能执行gcloud artifacts
 ```
+### Artifact Registry
+```
+gcloud artifacts repositories create "$REGISTRY_REPO" \
+    --repository-format=docker \
+    --location="$REGION" \
+    --description="ViralCopy AI Docker images" \
+    --quiet 2>/dev/null || log_warn "Registry already exists, skipping"
+
+  gcloud auth configure-docker "${REGISTRY}" --quiet
+  
+set up artifact registry,，用来存储镜像的
+```
+### Cloud SQL
+```
+gcloud sql instances create "$DB_INSTANCE" \
+      --database-version=POSTGRES_16 \
+      --region="$REGION" \
+      --tier=db-g1-small \
+      --storage-size=20 \
+      --storage-auto-increase \
+      --availability-type=REGIONAL \
+      --backup \
+      --backup-start-time=04:00 \
+      --maintenance-window-day=SUN \
+      --maintenance-window-hour=6 \
+      --quiet
+      
+create postgre sql db instance
+
+
+gcloud sql databases create "$DB_NAME" \
+--instance="$DB_INSTANCE" --quiet 2>/dev/null || true
+create db
+
+gcloud sql users create "$DB_USER" \
+    --instance="$DB_INSTANCE" \
+    --password="$DB_PASSWORD" --quiet 2>/dev/null || {
+      log_warn "User may already exist — skipping user creation"
+    }
+create db user
+```
+### Cloud Storage
+```
+setup_gcs() {
+  log_info "Creating GCS bucket: gs://$GCS_BUCKET"
+  gcloud storage buckets create "gs://$GCS_BUCKET" \
+    --location="$REGION" \
+    --uniform-bucket-level-access \
+    --quiet 2>/dev/null || log_warn "Bucket already exists, skipping"
+
+  # Allow public read for uploaded images
+  gcloud storage buckets add-iam-policy-binding "gs://$GCS_BUCKET" \
+    --member=allUsers \
+    --role=roles/storage.objectViewer \
+    --quiet 2>/dev/null || true
+  log_success "GCS bucket ready"
+}
+
+用于存储文件
+```
+### service account
+```
+setup_iam() {
+  log_info "Creating GCP Service Account for workload identity..."
+  SA_NAME="viralcopy-sa"
+  SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+  gcloud iam service-accounts create "$SA_NAME" \
+    --description="ViralCopy AI workload identity SA" \
+    --display-name="ViralCopy SA" \
+    --quiet 2>/dev/null || log_warn "Service account already exists"
+
+  # Grant Cloud SQL Client
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/cloudsql.client" --quiet
+
+  # Grant GCS Object Admin
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/storage.objectAdmin" --quiet
+
+  # Grant Secret Manager reader
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/secretmanager.secretAccessor" --quiet
+
+  # Workload Identity binding
+  gcloud iam service-accounts add-iam-policy-binding "${SA_EMAIL}" \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="serviceAccount:${PROJECT_ID}.svc.id.goog[${NAMESPACE}/viralcopy-sa]" \
+    --quiet 2>/dev/null || true
+
+  # Patch the K8s service-account.yaml with actual values
+  sed -i "s/PROJECT_ID/${PROJECT_ID}/g" k8s/service-account.yaml 2>/dev/null || \
+  sed -i '' "s/PROJECT_ID/${PROJECT_ID}/g" k8s/service-account.yaml
+
+  log_success "IAM configured"
+}
+```
+### GKE Cluster
+```
+setup_gke() {
+  log_info "Creating GKE Autopilot cluster: $CLUSTER_NAME (may take 5-10 minutes)..."
+
+  if gcloud container clusters describe "$CLUSTER_NAME" \
+      --region="$REGION" --quiet &>/dev/null; then
+    log_warn "Cluster '$CLUSTER_NAME' already exists, getting credentials"
+  else
+    gcloud container clusters create-auto "$CLUSTER_NAME" \
+      --region="$REGION" \
+      --workload-pool="${PROJECT_ID}.svc.id.goog" \
+      --quiet
+    log_success "GKE Autopilot cluster created"
+  fi
+
+  gcloud container clusters get-credentials "$CLUSTER_NAME" \
+    --region="$REGION" --quiet
+  log_success "kubectl configured for $CLUSTER_NAME"
+}
+```
+### Static IP
+```
+setup_static_ip() {
+  log_info "Reserving global static IP: viralcopy-ip"
+  gcloud compute addresses create viralcopy-ip \
+    --global --quiet 2>/dev/null || log_warn "Static IP already exists"
+
+  STATIC_IP=$(gcloud compute addresses describe viralcopy-ip \
+    --global --format="value(address)")
+  log_success "Static IP: $STATIC_IP"
+  log_warn "Point your DNS A records to: $STATIC_IP"
+  log_warn "  https://34-107-167-235.sslip.io"
+  log_warn "  Domain currently: https://34-107-167-235.sslip.io"
+  
+}
+
+static IP needs to be created in GCP first, then it can be used to bind to a domain
+```
