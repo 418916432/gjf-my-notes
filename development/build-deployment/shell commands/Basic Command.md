@@ -36,7 +36,10 @@ useradd -m -u 1000 appuser  -m创建home目录 -u创建用户的id
 
 chown: change owner
 
-echo -n 'value' | base64  base64 encode
+echo -n 'value' | base64  
+base64 encode, -n不要在末尾加一个新的行。注意value里面的空格
+
+echo -n 'value' | base64 -d
 
 ruff: python代码检查工具，检查代码规范，是否有语法错误等
 

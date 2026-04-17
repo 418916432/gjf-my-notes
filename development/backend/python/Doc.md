@@ -116,3 +116,9 @@ Age = Annotated[int, "年龄必须大于0"]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 把原本的User 和附加的依赖规则打包在一起，生成一个新的类型CurrentUser
 ```
+### httpx
+```
+async with httpx.AsyncClient() as client:
+
+它是一个异步http客户端，这里异步对象的意思是，发起了请求，不阻塞，不然这个客户端啥事都干不了。
+```
