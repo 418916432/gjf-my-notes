@@ -181,3 +181,82 @@ setup_static_ip() {
 
 static IP needs to be created in GCP first, then it can be used to bind to a domain
 ```
+### gcloud builds
+```
+gcloud builds submit \
+  --project=YOUR_GCP_PROJECT_ID \
+  --config=cloudbuild.yaml \
+  --substitutions=_IMAGE_TAG=$IMAGE_TAG,_NEXT_PUBLIC_API_URL=https://34-107-167-235.sslip.io
+在google上构建镜像
+  
+steps:
+  # ── Backend ──────────────────────────────────────────────────────────────────
+  - name: "gcr.io/cloud-builders/docker"
+    id: build-backend
+    args:
+      - build
+      - --platform=linux/amd64
+      - -t
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/viralcopy/backend:${_IMAGE_TAG}"
+      - -t
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/viralcopy/backend:latest"
+      - -f
+      - backend/Dockerfile
+      - backend
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: push-backend
+    waitFor: ["build-backend"]
+    args:
+      - push
+      - --all-tags
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/viralcopy/backend"
+
+  # ── Frontend ─────────────────────────────────────────────────────────────────
+  - name: "gcr.io/cloud-builders/docker"
+    id: build-frontend
+    args:
+      - build
+      - --platform=linux/amd64
+      - --build-arg
+      - "NEXT_PUBLIC_API_URL=${_NEXT_PUBLIC_API_URL}"
+      - --build-arg
+      - "NEXT_PUBLIC_GOOGLE_CLIENT_ID=${_NEXT_PUBLIC_GOOGLE_CLIENT_ID}"
+      - -t
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/viralcopy/frontend:${_IMAGE_TAG}"
+      - -t
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/viralcopy/frontend:latest"
+      - -f
+      - frontend/Dockerfile
+      - frontend
+
+  - name: "gcr.io/cloud-builders/docker"
+    id: push-frontend
+    waitFor: ["build-frontend"]
+    args:
+      - push
+      - --all-tags
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/viralcopy/frontend"
+
+substitutions:
+  _REGION: us-central1
+  _IMAGE_TAG: latest
+  # Set this to your backend's public URL before building.
+  # Frontend API URL: https://34-107-167-235.sslip.io (all traffic via HTTPS ingress)
+  # When you have a domain, change this to https://api.yourdomain.com
+  _NEXT_PUBLIC_API_URL: https://34-107-167-235.sslip.io
+  _NEXT_PUBLIC_GOOGLE_CLIENT_ID: ""
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+
+images:
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/viralcopy/backend:${_IMAGE_TAG}"
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/viralcopy/backend:latest"
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/viralcopy/frontend:${_IMAGE_TAG}"
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/viralcopy/frontend:latest"
+
+cloudbuild.yaml
+它和 GitHub Actions 的 workflow 功能类似，但这是 Google Cloud 官方的 CI/CD 工具, 在 Google Cloud 上自动构建并推送两个 Docker 镜像.  
+```
