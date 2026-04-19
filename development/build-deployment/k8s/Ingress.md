@@ -80,7 +80,19 @@ spec:
     - 34-107-167-235.sslip.io    # 为这个域名申请 SSL 证书
 ```
 ## python sample
+### Ingress
 ```
+# ── GKE Ingress with HTTPS via custom domain viralcopy.cc ─────────────────────
+# Domain: viralcopy.cc  →  DNS A record → 34.107.167.235 (GKE global static IP)
+# Frontend: https://viralcopy.cc/
+# Backend:  https://viralcopy.cc/api/* and /health
+#
+# IP: 34.107.167.235 is a GKE-managed global static IP (auto-reserved, stable).
+# ManagedCertificate provisions TLS automatically once DNS propagates (15-30 min).
+#
+# DNS setup (in your domain registrar):
+#   A record:  viralcopy.cc  →  34.107.167.235
+#   A record:  www.viralcopy.cc → 34.107.167.235  (optional)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -88,12 +100,13 @@ metadata:
   namespace: viralcopy
   annotations:
     kubernetes.io/ingress.class: "gce"
-    kubernetes.io/ingress.global-static-ip-name: "viralcopy-ip"
-    networking.gke.io/managed-certificates: "viralcopy-ssl"
-    kubernetes.io/ingress.allow-http: "true"
+    networking.gke.io/managed-certificates: "viralcopy-ssl-cc"
+    kubernetes.io/ingress.allow-http: "false"
+    # ExternalDNS: auto-update Alibaba Cloud DNS A record when IP changes
+    external-dns.alpha.kubernetes.io/hostname: "viralcopy.cc"
 spec:
   rules:
-    - host: 34-107-167-235.sslip.io
+    - host: viralcopy.cc
       http:
         paths:
           # Backend routes — API, health, OpenAPI spec
@@ -135,9 +148,102 @@ spec:
 apiVersion: networking.gke.io/v1
 kind: ManagedCertificate
 metadata:
-  name: viralcopy-ssl
+  name: viralcopy-ssl-cc
   namespace: viralcopy
 spec:
   domains:
-    - 34-107-167-235.sslip.io
+    - viralcopy.cc
+
+```
+### external-dns
+```
+# ExternalDNS — watches Ingress resources and syncs A records to Alibaba Cloud DNS
+# Credentials are stored in Secret "external-dns-alicloud" (not committed to git)
+# When the GKE Ingress IP changes, ExternalDNS auto-updates viralcopy.cc DNS
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: external-dns
+  namespace: viralcopy
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: external-dns
+rules:
+  - apiGroups: [""]
+    resources: ["services", "endpoints", "pods", "nodes"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["extensions", "networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "watch", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: external-dns
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-dns
+subjects:
+  - kind: ServiceAccount
+    name: external-dns
+    namespace: viralcopy
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: viralcopy
+  labels:
+    app: external-dns
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: external-dns
+  template:
+    metadata:
+      labels:
+        app: external-dns
+    spec:
+      serviceAccountName: external-dns
+      containers:
+        - name: external-dns
+          image: registry.k8s.io/external-dns/external-dns:v0.14.2
+          args:
+            - --source=ingress
+            - --domain-filter=viralcopy.cc        # only manage records under this domain
+            - --provider=alibabacloud
+            - --policy=upsert-only                # never delete DNS records automatically
+            - --alibaba-cloud-zone-type=public
+            - --registry=txt                      # use TXT ownership records
+            - --txt-owner-id=viralcopy-gke        # unique ID to track owned records
+            - --txt-prefix=externaldns-            # prefix TXT records to avoid conflicts (e.g. externaldns-viralcopy.cc)
+            - --log-level=info
+            - --interval=1m                       # sync every minute
+          volumeMounts:
+            - name: alicloud-config
+              mountPath: /etc/kubernetes
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
+      volumes:
+        - name: alicloud-config
+          secret:
+            secretName: external-dns-alicloud
+
 ```

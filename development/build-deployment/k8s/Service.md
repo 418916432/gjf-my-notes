@@ -30,12 +30,16 @@ ports:
 | LoadBalancer       | 公网（云厂商 LB）      | 对外提供服务   |
 | ExternalName       | 外部域名            | 访问集群外服务  |
 ## python sample
+### Service
 ```
 apiVersion: v1              # Service 的 API 版本
 kind: Service               # 资源类型
 metadata:
   name: backend             # Service 名称（其他 Pod 用这个访问）
   namespace: viralcopy      # 命名空间
+  annotations:
+    # Use BackendConfig to increase timeout to 300s (covers DeepSeek Reasoner ~60-120s)
+    cloud.google.com/backend-config: '{"default": "backend-timeout"}'
 spec:
   selector:                 # 选择器：找哪些 Pod
     app: backend            # 找 labels 包含 app=backend 的 Pod
@@ -44,4 +48,19 @@ spec:
       port: 8000            # Service 监听的端口
       targetPort: 8000      # 转发到 Pod 的端口
   type: ClusterIP           # Service 类型（集群内部访问）
+```
+### BackendConfig
+```
+# GKE BackendConfig — increases backend timeout for long-running AI requests
+# DeepSeek Reasoner (R1) takes 60-120s; default GKE timeout is 30s → causes 502.
+# This BackendConfig is referenced by the backend Service annotation.
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: backend-timeout
+  namespace: viralcopy
+spec:
+  timeoutSec: 300   # 5 minutes — covers even slow Reasoner responses
+
+告诉GKE的 Ingress / Load Balancer，把默认超时时间从30秒，延长到5分钟。这个配置是在Ingress里面读取了service的配置。否则默认30秒502
 ```

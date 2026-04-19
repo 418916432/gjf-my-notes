@@ -61,7 +61,7 @@ command -v xxx: 检查XXX命令能否找到
 
 |: 把前面的结果传给后面
 
-
+nslookup: 查询域名ip
 ```
 ### chown
 ```
