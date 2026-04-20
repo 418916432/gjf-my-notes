@@ -96,3 +96,33 @@ export function helperFunction() { ... }
 import HomePage, { API_URL, MAX_RETRY } from './HomePage';
 //      ↑ 默认导入（名字自定）     ↑ 命名导入（必须用原名字）
 ```
+### Promise
+```
+函数立刻执行，但不会立刻返回数据，比如api要等数据返回。未来结果回来时，再通过 .then() 或 await 告诉你
+```
+### => (
+```
+ES6 箭头函数的简写语法
+
+(set) => ({ 👈 注意这个括号！
+  user: null,
+  token: null,
+  ...
+})
+
+等价于
+(set) => {
+  return {
+    user: null,
+    token: null,
+    ...
+  }
+}
+```
+### set
+```
+set({ token });
+
+set 一个json对象。这是ES6的写法，默认变量名字也是这样，相当于
+set({ token: token });
+```

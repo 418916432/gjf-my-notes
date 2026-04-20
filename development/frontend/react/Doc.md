@@ -217,3 +217,36 @@ const { isAuthenticated, refreshUser } = useAuth();
 //     一个变量             一个函数
 // 但 useAuth 实际返回了更多，只是你只取了这两个
 ```
+### useEffect
+```
+打开页面，或者刷新页面，这个就会被执行一次。比如页面刷新了，但是用户信息没了，token还在。这里就可以重新获取user。本质上因为页面刷新，会调用useAuth()，所以这个写在这里会自动执行。
+
+export function useAuth() {
+  const { user, token, isLoading, login, logout, refreshUser } = useAuthStore();
+
+  // On mount: if we have a token but no user, restore session via /users/me
+  useEffect(() => {
+    const storedToken = localStorage.getItem("access_token");
+    if (storedToken && !user && !isLoading) {
+      useAuthStore.getState().login(storedToken).catch(() => {
+        localStorage.removeItem("access_token");
+        useAuthStore.getState().setToken(null);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount only
+
+  return {
+    user,
+    token,
+    isLoading,
+    isAuthenticated: !!user,
+    isAdmin: user?.is_admin ?? false,
+    isSubscribed: user?.is_subscribed ?? false,
+    trialRemaining: user?.trial_remaining ?? 0,
+    login,
+    logout,
+    refreshUser,
+  };
+}
+```

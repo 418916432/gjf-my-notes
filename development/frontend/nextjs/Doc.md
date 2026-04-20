@@ -36,3 +36,8 @@ In Next.js, each folder under `app/` is a URL route. The `page.tsx` inside rende
 ```
 ext.js 的一个指令（directive）用来告诉 Next.js：这个组件必须在浏览器（客户端）运行，而不是在服务器上。
 ```
+### export default
+```
+export default function HomePage()
+next.js会自动执行这个带有export default的方法，加载当前页面
+```
