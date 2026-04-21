@@ -126,3 +126,26 @@ set({ token });
 set 一个json对象。这是ES6的写法，默认变量名字也是这样，相当于
 set({ token: token });
 ```
+### Record
+```
+Record<KeyType, ValueType> = a JavaScript object
+```
+### props
+```
+props: short for properties
+
+It is a single JavaScript object that holds all the data/attributes you pass into a component.
+
+<Welcome name="Alice" age={25}>
+  <p>Hello!</p>
+  <button>Click Me</button>
+</Welcome>
+
+props = {
+  name: "Alice",
+  age: 25,
+  children: <p>Hello!</p> <button>Click Me</button>
+}
+
+children: It’s multiple elements wrapped in a fragment.
+```

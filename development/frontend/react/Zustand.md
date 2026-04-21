@@ -44,6 +44,14 @@ onRehydrateStorage: () => (state) => { ... }
 (set) => { ... }
 修改全局状态的数据。所以set必须用在create里面，设置_hydrated，这样页面就知道恢复完成了，可以用了。
 ```
+### useAuthStore
+```
+const { user, token, isLoading, login, logout, refreshUser } = useAuthStore();
+const user = useAuthStore((s) => s.user);
+
+if you pass only a function, you only get that piece of state
+if you pass nothing, you get the entire store object.
+```
 ## sample
 ```
 interface AuthState {

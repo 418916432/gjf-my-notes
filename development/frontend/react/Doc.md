@@ -250,3 +250,17 @@ export function useAuth() {
   };
 }
 ```
+### {...}
+```
+{... }: object spreading in React. Take all the things inside this object, and COPY them one by one into the html element. 
+
+{
+  onChange: function,
+  onBlur: function,
+  name: "input_text",
+  ref: ref
+}
+
+{...register("input_text")} 
+```
+

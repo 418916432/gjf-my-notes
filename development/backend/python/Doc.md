@@ -122,3 +122,33 @@ async with httpx.AsyncClient() as client:
 
 它是一个异步http客户端，这里异步对象的意思是，发起了请求，不阻塞，不然这个客户端啥事都干不了。
 ```
+### ()
+```
+my_tuple = (1, 2, 3)
+tuple
+
+all_allowed = (
+    list1 +
+    list2 +
+    list3
+)
+still a list, combining all the list together
+```
+### @dataclass
+```
+It automatically creates these methods for free:
+__init__ → constructor (sets variables)
+__repr__ → printable string (easy to debug)
+__eq__ → comparison (check if two objects are equal)
+
+
+@dataclass
+class SkillSet:
+    name: str
+    description: str
+```
+### quotation type
+```
+next_skill: "SkillSet"
+python doesnot yet know the class exists which reading its own code. Just treat it as a type for now.
+```
