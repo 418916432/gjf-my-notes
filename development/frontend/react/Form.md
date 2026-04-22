@@ -75,3 +75,16 @@ register("input_text") RETURNS:
 }
 
 ```
+### get form value
+```
+<textarea
+  onChange={function}
+  onBlur={function}
+  name="input_text"
+  ref={ref}
+/>
+
+react hoof form uses the name attribute to map input values to the form object.
+
+get values in this way: form.input_text
+```

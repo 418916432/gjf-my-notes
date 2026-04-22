@@ -262,5 +262,22 @@ export function useAuth() {
 }
 
 {...register("input_text")} 
+
+<textarea {...register("input_text")} />
+
+after spread:
+
+<textarea
+  onChange={function}
+  onBlur={function}
+  name="input_text"
+  ref={ref}
+/>
+```
+### {}
+```
+{}: JavaScript values (numbers, variables, functions)
+rows=4 wrong inreact
+rows={4} this is a number not a string
 ```
 
